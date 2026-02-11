@@ -1,12 +1,40 @@
- version: '3.8' 
+version: "3.8"
 
+services:
+  nginx-proxy:
+    image: nginx-proxy:1.0
+    ports:
+      - "80:80"
+    networks:
+      - app_network
+    deploy:
+      replicas: 1
 
-services: 
-nginx-proxy:
-build: ./proxy
-ports:
- -"80:80"
-deploy:
-replicas: 1
-restart_policy:
-condition: on-failure  
+  app:
+    image: app-php:1.0   # 👈 imagem que você buildou
+    networks:
+      - app_network
+    deploy:
+      replicas: 1
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    deploy:
+      replicas: 1
+
+networks:
+  app_network:
+    driver: overlay
+
+volumes:
+  mysql_data:
